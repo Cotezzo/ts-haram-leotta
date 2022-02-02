@@ -1,0 +1,33 @@
+{
+  "name": "ts-haram-leotta",
+  "description": "",
+  "version": "4.0.2",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node-dev --respawn --transpile-only --poll ./src/index.ts"
+  },
+  "keywords": [],
+  "author": "Cotezzo",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.1.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.7.0",
+    "@discordjs/voice": "^0.8.0",
+    "axios": "^0.23.0",
+    "deepai": "^0.0.3",
+    "discord.js": "^13.6.0",
+    "dotenv": "^10.0.0",
+    "ffmpeg": "^0.0.4",
+    "ffmpeg-static": "^4.4.1",
+    "he": "^1.2.0",
+    "jimp": "^0.16.1",
+    "libsodium-wrappers": "^0.7.9",
+    "mongoose": "^6.0.12",
+    "opusscript": "^0.0.8",
+    "ytdl-core": "^4.10.0"
+  }
+}

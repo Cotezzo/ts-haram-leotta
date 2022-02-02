@@ -1,0 +1,1 @@
+export type DeepAiOperation = "colorizer" | "neuraltalk" | "text2img" | "toonify" | "deepdream" | "highres-inpainting" | "waifu2x";
