@@ -69,7 +69,8 @@ export class MusicPlayer {
 
         // On song finish
         this.player.on(AudioPlayerStatus.Idle, async () => {
-            if(this.getCurrentSong().type !== SONG_TYPES.YOUTUBE_MIX) {
+            const song: Song = this.getCurrentSong();
+            if(song && song.type !== SONG_TYPES.YOUTUBE_MIX) {
                 if (this.goNext) {                                                                          // If you can skip normally
                     if (this.loop === 2) this.addSong(...this.songQueue.splice(this.currentSongIndex, 1)); // Loop-playlist:  re-queue the last song played
                     if (!this.loop)                                                                         // No loop: normally skip the played song
@@ -78,7 +79,7 @@ export class MusicPlayer {
                 }
             }
             this.goNext = true;                                                                         // Set the skipping back to default
-            this.play();                                                                                // Loop-song: don't skip and play the next (same, index unchanged) song
+            this.tryToPlay();                                                                                // Loop-song: don't skip and play the next (same, index unchanged) song
         });
 
         logger.info("New instance created and listening on AudioPlayer events");
@@ -105,7 +106,10 @@ export class MusicPlayer {
     }
 
     public reset = async (): Promise<void> => {
-        this.player?.stop();
+        logger.debug("fn:reset started");
+
+        this.songQueue = [];
+        this.player?.stop(true);
 
         try{
             this.connection?.disconnect();
@@ -125,15 +129,25 @@ export class MusicPlayer {
      * Adds a song to the songs array.
      * @param {Song} song 
      */
-    public addSong = (...songs: Song[]): number => this.songQueue.push(...songs)
+    public addSong = (...songs: Song[]): number => {
+        logger.debug(`fn:addSong started [songs: ${songs}]`);
 
-    public getCurrentSong = () => this.songQueue[this.currentSongIndex];
+        return this.songQueue.push(...songs)
+    }
+
+    public getCurrentSong = () => {
+        logger.debug(`fn:getCurrentSong started [currentSongIndex: ${this.currentSongIndex}]`);
+
+        return this.songQueue[this.currentSongIndex];
+    }
 
     /**
      * Function to call wheter the queue is changed, so that the bot can try to connect to the voice channel and play music if it's not doing it.
      * @param {Message | CommandInteraction} risp 
      */
     public tryToPlay = (risp?: Message | CommandInteraction | ButtonInteraction): Promise<any> | void => {
+        logger.debug(`fn:tryToPlay started [risp?: ${!!risp}]`);
+
         if (this.isPlaying()) return this.editQueueDynamicMessage();        // Edit if something is already playing (to avoid play() interface overlap and bugs)
 
         // If risp is given, update properties
@@ -193,9 +207,14 @@ export class MusicPlayer {
      * Grabs the current song and plays it if exists
      */
     private play = async (): Promise<void> => {
+        logger.debug(`fn:play started`);
+
         if (this.isPlaying()) return;                               // If there's a song playing, return
 
         let song: Song = this.getCurrentSong();                     // Get the current song (the one that should be played)
+
+        logger.debug(`song: ${JSON.stringify(song)}`);
+
         if (!song) {                                                // If no song is in position (queue is "empty", not counting history)
             this.logDynamicMessage?.delete();                       // Delete remaining interfaces and return
             this.queueDynamicMessage?.delete();                     // Don't clear the object since we still have the history and other options
@@ -262,10 +281,15 @@ export class MusicPlayer {
     }
 
 
-    public leave = (): void => this.connection?.destroy();
+    public leave = (): void => {
+        logger.debug(`fn:leave started`);
+        this.connection?.destroy();
+    }
 
     /* ==== Add Songs ============= */
     public addSongFromUrl = async (risp: Message | CommandInteraction, url: string): Promise<void> => {
+        logger.debug(`fn:addSongFromUrl started [url: ${url}]`);
+
         const oldLen: number = this.songQueue.length;                                               // Queue length before inserting new songs
         const oldDurationSeconds: number = this.getDurationSeconds();                               // Queue duration before inserting new songs
         const requestor: string = risp.member.user.id;                                              // Id of the user who started the procedure
@@ -353,12 +377,16 @@ export class MusicPlayer {
     }
 
     public playMix = async (risp: Message | CommandInteraction, url: string): Promise<void> => {
+        logger.debug(`fn:playMix started [url: ${url}]`);
+
         if(!youtubeVideo.test(url)) return;
         await this.playMix_(risp, url);
         this.tryToPlay(risp);
     }
 
     private playMix_ = async (risp: Message | CommandInteraction, url: string): Promise<void> => {
+        logger.debug(`fn:playMix_ started [url: ${url}]`);
+
         const videoId = getYoutubeVideoId(url);
         const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails;
         const song: Song = { title, url, thumbnail: thumbnail.thumbnails.pop().url, lengthSeconds: +lengthSeconds, lengthString: secondsToString(+lengthSeconds),
@@ -381,6 +409,8 @@ export class MusicPlayer {
 
     /* ==== HARDCODED MUSICUTILS ============================================================================ */
     public getYoutubeMixSong = async (risp: Message | CommandInteraction, url: string): Promise<any> => {
+        logger.debug(`fn:getYoutubeMixSong started [url: ${url}]`);
+
         if (!youtubeVideo.test(url)) return;
         const videoId = getYoutubeVideoId(url);
         const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails;
@@ -398,6 +428,8 @@ export class MusicPlayer {
      * @returns {Promise<void>}
      */
     public playUserFavourites = async (risp: Message | CommandInteraction, index: number): Promise<void> => {   // Same concept of AddSongFromUrl (add, tryToPlay)
+        logger.debug(`fn:playUserFavourites started [index: ${index}]`);
+
         const oldLen: number = this.songQueue.length;                                                           // Queue length before inserting new songs
         const oldDurationSeconds: number = this.getDurationSeconds();                                           // Queue duration before inserting new songs
         const requestor: string = risp.member.user.id;
@@ -428,6 +460,8 @@ export class MusicPlayer {
      * @returns {Promise<any>} 
      */
     private getSpotifyPlaylistAlbumMetadata = async (query: string, requestor: string, album = false): Promise<any> => {
+        logger.debug(`fn:getSpotifyPlaylistAlbumMetadata started [query: ${query}, album: ${album}]`);
+
         let addedSongs: number = 0;                                                                                             //Canzoni aggiunte. Se 0, nessuna canzone trovata, query errata, ecc. Errore.
         let playlistDuration: number = 0;
         const { data }: { data: string } = await axios.get(`https://open.spotify.com/${album ? "album" : "playlist"}/${query}`,           //Richiedo info fingendomi browser, estraggo Bearer Auth Token da html
@@ -474,6 +508,8 @@ export class MusicPlayer {
      * @returns {Promise<Song>}
      */
     private getFirstYoutubeResult = async (query: string): Promise<Song> => {
+        logger.debug(`fn:getFirstYoutubeResult started [query: ${query}]`);
+
         const { title, id, length, thumbnail } = (await getFirstYoutubeResults(query, true)).items[0];    // Get song metadata
         return { title, url: `https://www.youtube.com/watch?v=${id}`, lengthString: length.simpleText, lengthSeconds: stringToSeconds(length.simpleText), type: SONG_TYPES.YOUTUBE, thumbnail: thumbnail.thumbnails.pop().url };
     }
@@ -484,6 +520,8 @@ export class MusicPlayer {
      * @param {number} howMany how many songs to skip (default: 1)
      */
     public skipSongs = (howMany: number = 1, risp?: Message | CommandInteraction | ButtonInteraction): void => {
+        logger.debug(`fn:skipSongs started [howMany: ${howMany}, risp?: ${!!risp}]`);
+
         // if (this.currentSongIndex === MusicPlayer.MAX_HISTORY) this.songQueue.shift();
         logger.debug(`HowMany: ${howMany} - currentIndex: ${this.currentSongIndex}`);
         this.currentSongIndex += howMany - 1;
@@ -491,12 +529,13 @@ export class MusicPlayer {
         // if (howMany > 1) this.songQueue.splice(this.currentSongIndex + 1, howMany - 1);    // Remove extra songs before actually skipping if the user skipped more than 1 song
         logger.debug(`HowMany: ${howMany} - currentIndex: ${this.currentSongIndex}`);
         this.player.unpause();                                                          // It doesn't crash if it's not paused, so try to unpause first
-        this.player.stop();                                                             // Kills the song that is playing, triggering AudioPlayerStatus.Idle
+        this.player.stop(true);                                                             // Kills the song that is playing, triggering AudioPlayerStatus.Idle
         
-        this.tryToPlay(risp);
+        // this.tryToPlay(risp);
     }
 
     public skipYoutubeMix = () => {
+        logger.debug(`fn:skipYoutubeMix started`);
         if(this.getCurrentSong().type === SONG_TYPES.YOUTUBE_MIX){
             this.currentSongIndex++;
             this.skipSongs();
@@ -508,6 +547,8 @@ export class MusicPlayer {
      * @param howMany
      */
     public backSongs = (howMany: number = 1, risp?: Message | CommandInteraction | ButtonInteraction): void => {
+        logger.debug(`fn:backSongs started [howMany: ${howMany}, risp?: ${!!risp}]`);
+
         if (howMany < 1) return;                                            // Check input
 
         this.goNext = !this.getCurrentSong()
@@ -529,6 +570,8 @@ export class MusicPlayer {
      * @param {number} howMany how many elements remove (defualt: 1)
      */
      public removeSongs = (index: number = 1, howMany: number = 1): Promise<Message> | void => {
+        logger.debug(`fn:removeSongs started [index: ${index}, howMany: ${howMany}]`);
+
         index -= 1; // Normalize user input
         if (index < 0) return;                                                   // Check input
 
@@ -538,21 +581,29 @@ export class MusicPlayer {
     }
 
     public pauseSong = (): Promise<Message> => {
+        logger.debug(`fn:pauseSong started`);
+
         this.player.pause();
         return this.editQueueDynamicMessage();
     }
 
     public resumeSong = (): Promise<Message> => {
+        logger.debug(`fn:resumeSong started`);
+
         this.player.unpause();
         return this.editQueueDynamicMessage();
     }
 
     public switchLoop = (): Promise<Message> => {
+        logger.debug(`fn:switchLoop started`);
+
         this.loop = (this.loop + 1) % 3;
         return this.editQueueDynamicMessage();
     }
 
     public shuffle = (): void => {
+        logger.debug(`fn:shuffle started`);
+
         const offset = this.currentSongIndex + 1;
         for (let i = this.songQueue.length - 1; i > this.currentSongIndex; i--) {
             const j = Math.floor(Math.random() * (i - offset + 1)) + offset;
@@ -587,14 +638,18 @@ export class MusicPlayer {
      * @param {TextBasedChannels} textChannel
      */
     bindTextChannel = (textChannel: TextBasedChannel): void => {
+        logger.debug(`fn:bindTextChannel started [textChannel: ${textChannel.id}]`);
+
         this.textChannel = textChannel;                                     // Update this channel
         this.navigatorDynamicMessage.updateTextChannel(textChannel);             // Update interfaces channel
         this.queueDynamicMessage.updateTextChannel(textChannel);
     }
 
 
-    private addSongMixLog = (channel: TextBasedChannel, song: Song): Promise<Message> =>
-        this.addSongLog(channel, { title: "Youtube Mix - " + song.title, ...song });
+    private addSongMixLog = (channel: TextBasedChannel, song: Song): Promise<Message> => {
+        logger.debug(`fn:addSongMixLog started`);
+        return this.addSongLog(channel, { title: "Youtube Mix - " + song.title, ...song });
+    }
 
          
     /**
@@ -603,16 +658,19 @@ export class MusicPlayer {
      * @param {Song} song
      * @returns {Promise<Message>}
      */
-    private addSongLog = (channel: TextBasedChannel, song: Song): Promise<Message> =>
-        this.addLog(channel, `Queued [${song.title}](${song.url})`, song.lengthString, song.requestor, this.songQueue.length, this.getDurationSeconds(), song.thumbnail);
-
+    private addSongLog = (channel: TextBasedChannel, song: Song): Promise<Message> => {
+        logger.debug(`fn:addSongLog started`);
+        return this.addLog(channel, `Queued [${song.title}](${song.url})`, song.lengthString, song.requestor, this.songQueue.length, this.getDurationSeconds(), song.thumbnail);
+    }
     /**
      * Sends an embed with some informations about the added playlist.
      * TO USE AFTER THE PLAYLIST IS ADDED TO THE QUEUE.
      * @returns {Promise<Message>}
      */
-    private addPlaylistLog = (channel: TextBasedChannel, howMany: number, title: string, url: string, duration: string, requestor: string, position: number, timeUntilPlaying: number, thumbnail: string): Promise<Message> =>
-        this.addLog(channel, `Queued ${howMany} songs from [${title}](${url})`, duration, requestor, position, timeUntilPlaying, thumbnail);
+    private addPlaylistLog = (channel: TextBasedChannel, howMany: number, title: string, url: string, duration: string, requestor: string, position: number, timeUntilPlaying: number, thumbnail: string): Promise<Message> => {
+        logger.debug(`fn:addPlaylistLog started`);
+        return this.addLog(channel, `Queued ${howMany} songs from [${title}](${url})`, duration, requestor, position, timeUntilPlaying, thumbnail);
+    }
 
     /**
      * Sends an embed with some informations about the added song or playlist.
@@ -646,6 +704,8 @@ export class MusicPlayer {
      * @returns {any} Object to send in chat.
      */
     private getQueueContent = (): any => {
+        logger.debug(`fn:getQueueContent started`);
+
         const paused: boolean = this.player.state.status === "paused";
         const song: Song = this.songQueue[this.currentSongIndex];
 
@@ -700,6 +760,8 @@ export class MusicPlayer {
      * @returns {any} Object to send in chat.
      */
     private getNavigatorContent = (): any => {
+        logger.debug(`fn:getNavigatorContent started`);
+
         let content: string;
         let pagTot: number = 0;
 
@@ -757,11 +819,24 @@ export class MusicPlayer {
         return { content, components: [component] };
     }
 
-    public editQueueDynamicMessage = (): Promise<Message> => this.queueDynamicMessage.updateContent(this.getQueueContent()).edit();
-    public resendQueueDynamicMessage = (): Promise<Message> => this.queueDynamicMessage.updateContent(this.getQueueContent()).resend();
+    public editQueueDynamicMessage = (): Promise<Message> => {
+        logger.debug(`fn:editQueueDynamicMessage started`);
+        return this.queueDynamicMessage.updateContent(this.getQueueContent()).edit();
+    }
+    public resendQueueDynamicMessage = (): Promise<Message> => {
+        logger.debug(`fn:resendQueueDynamicMessage started`);
+        return this.queueDynamicMessage.updateContent(this.getQueueContent()).resend();
+    }
 
-    public editNavigatorDynamicMessage = (): Promise<Message> => this.navigatorDynamicMessage.updateContent(this.getNavigatorContent()).edit();
-    public resendNavigatorDynamicMessage = (): Promise<Message> => this.navigatorDynamicMessage.updateContent(this.getNavigatorContent()).resend();
+    public editNavigatorDynamicMessage = (): Promise<Message> => {
+        logger.debug(`fn:editNavigatorDynamicMessage started`);
+        return this.navigatorDynamicMessage.updateContent(this.getNavigatorContent()).edit();
+    }
+
+    public resendNavigatorDynamicMessage = (): Promise<Message> => {
+        logger.debug(`fn:resendNavigatorDynamicMessage started`);
+        return this.navigatorDynamicMessage.updateContent(this.getNavigatorContent()).resend();
+    }
 
     public navigator = (textChannel: TextBasedChannel): Promise<Message> => {
         this.navPage = 0;
