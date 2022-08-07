@@ -180,7 +180,7 @@ const logicHandler: Commands<Command> = {
     /* ==== DEEPAI ============================================================================================ */
     genpic: {
         name: "genpic", category: "DeepAI", description: "Generates a picture using an artificial intelligence. ",
-        fn: (query: string = "") => deepAiApi("text2img", query).then((content: string) => deepAiShortcut(query ? `Pic of "${query}"` : "Random generated pic", content))
+        fn: (query: string = "") => deepAiApi("text2img", query).then((content: string) => deepAiShortcut(query ? `Pic of "${query}"` : "Random generated pic", content)).catch(e => { Logger.warn(e);  return "Magari prova qualcosa di sensato lol"; })
     },
     up: {
         name: "up", category: "DeepAI", description: "Upscales a picture using articial intelligence. ",
