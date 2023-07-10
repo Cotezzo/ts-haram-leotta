@@ -28,7 +28,7 @@ export const MessageHandler = async (msg: Message): Promise<any> => {
     logger.log(`${msg.guild.name} - ${msg.author.username}: ${msg.content}`);                       // Log command
 
     commandHandler(msg, logicHandler[cmdName].fn, ...args)                                       // Call internal command with parameters given directly by users
-    .catch((e: Error) => logger.error(`Error during the execution of ${cmdName}: ` + e.message));   // Catch errors in commands
+    .catch((e: Error) => logger.error(`Error during the execution of ${cmdName}: ` + e.stack));   // Catch errors in commands
 }
 
 /* ==== Command Handlers ================================================================================================================== */
@@ -50,7 +50,7 @@ const commandHandlerMap: MessageCommandHandlerMap = {
         const user = userName ? (file.test(userName) ? userName : await getUserFromMention(msg, userName)
         // .catch(e => logger.error("getUserFromMention error: " + e))
         ) : msg.author; // Get user for "username" if exists, or get author
-        if (user) return cmd(user).then(content => msg.reply(content));
+        if (user) return cmd(user).then(content => { logger.info(content); return msg.reply(content) });
     },
 
     /* ==== INTERNET =============================================================================================== */
@@ -66,7 +66,7 @@ const commandHandlerMap: MessageCommandHandlerMap = {
     "r, r/, reddit": (msg, cmd, subreddit: string) => {
         return cmd(msg.channelId, subreddit)
         .then((post: RedditPost) => sendPost(post, msg))
-        .catch(() => msg.reply("Invalid subreddit."));
+        .catch((e) => {logger.warn(e); return msg.reply("Invalid subreddit.") });
     },
 
     /* ==== DEEPAI ================================================================================================= */

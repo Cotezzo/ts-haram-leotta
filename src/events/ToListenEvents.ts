@@ -43,27 +43,29 @@ export const toListenEvents: Event[] = [
                     case "bot di merda":        return msg.channel.send(`Ma tu sei una merda`);
                     case "baba":                return msg.channel.send(`boey`);
                     case "good bot":            return msg.channel.send(`: )`);
-                    case "bad bot":             return msg.channel.send(`: ()`);
+                    case "bad bot":             return msg.channel.send(`: (`);
+                    case "per il meme":         return msg.channel.send(`<@192312520567029760>`);
                 }
 
                 return lowerCaseContent.split(/[\n ]+/).some(word => {                                                 //Ciclo per ogni parola, per non controllare tutto il contenuto ogni volta
                     switch(word){
-                    
-                    case "grazie":              return msg.channel.send(`grazie al cazzo`);
-                    case "coglione":            return msg.channel.send(`Ma coglione a chi, figlio di puttana?`);
-                    case "zitto": case "taci":  return msg.channel.send(`Chiudi quella cazzo di bocca, ti prego...`);
-                    case "bot":                 return msg.channel.send(`Cazzo vuoi?`);
-                    case "suca":                return msg.channel.send(`melo`);
+                        case "grazie":              return msg.channel.send(`grazie al cazzo`);
+                        case "coglione":            return msg.channel.send(`Ma coglione a chi, figlio di puttana?`);
+                        case "zitto": case "taci":  return msg.channel.send(`Chiudi quella cazzo di bocca, ti prego...`);
+                        case "bot":                 return msg.channel.send(`Cazzo vuoi?`);
+                        case "suca":                return msg.channel.send(`melo`);
+                        case "lol":                 return msg.channel.send(`Cazzo ridi che domani muori`);
+                        case "beasty":              return msg.channel.send(`per il meme`);
 
-                    //Se contiene una parola haram, react "🇭🇦🇷🅰️🇲"
-                    case "mortadella": case "pork": case "madonna": case "boobs": case "hamburger": case "gesù": case "bacon":
-                    case "salume": case "santa": case "christmas": case "natale": case "sex": case "pig": case "porco": case "maiale":
-                    case "prosciutto": case "salame": case "haram": case "sesso": case "porchetta": case "speck": case "pancetta": 
-                        msg.react('🇭').catch(() => {});
-                        msg.react('🇦').catch(() => {});
-                        msg.react('🇷').catch(() => {});
-                        msg.react('🅰️').catch(() => {});
-                        msg.react('🇲').catch(() => {});
+                        //Se contiene una parola haram, react "🇭🇦🇷🅰️🇲"
+                        case "mortadella": case "pork": case "madonna": case "boobs": case "hamburger": case "gesù": case "bacon":
+                        case "salume": case "santa": case "christmas": case "natale": case "sex": case "pig": case "porco": case "maiale":
+                        case "prosciutto": case "salame": case "haram": case "sesso": case "porchetta": case "speck": case "pancetta": case "dio":
+                            msg.react('🇭').catch(() => {});
+                            msg.react('🇦').catch(() => {});
+                            msg.react('🇷').catch(() => {});
+                            msg.react('🅰️').catch(() => {});
+                            msg.react('🇲').catch(() => {});
                     }
                 });
             }

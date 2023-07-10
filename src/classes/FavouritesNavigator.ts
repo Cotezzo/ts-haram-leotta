@@ -1,4 +1,4 @@
-import { CommandInteraction, Message, MessageActionRow, MessageButton } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction, Message } from "discord.js";
 import { Song } from "../interfaces/Song";
 import { getFavourites } from "../service/UserService";
 import { formatSchifo } from "../utils/StringFormatUtils";
@@ -80,35 +80,35 @@ export class FavouritesNavigator {
             content += `\n\nPage ${this.page+1}/${pagTot+1}                 ${(this.page == pagTot ? `Nothing else to see here. ` : `${this.songs.length - (this.page * 10)} more songs... `)}` + `\`\`\``;
         }
 
-        const component: MessageActionRow = new MessageActionRow()
+        const component: ActionRowBuilder = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId(`favfirst-${this.UUID}`)
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji("877853994255527946")
                 .setDisabled(!this.page),
 
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId(`favprev-${this.UUID}`)
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji("877853994255527946")
                 .setDisabled(!this.page),
 
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId(`favnext-${this.UUID}`)
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji("877853994326851634")
                 .setDisabled(this.page == pagTot),
             
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId(`favlast-${this.UUID}`)
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji("877853994326851634")
                 .setDisabled(this.page == pagTot),
 
-                new MessageButton()
+                new ButtonBuilder()
                 .setCustomId(`favreset-${this.UUID}`)
-                .setStyle("SECONDARY")
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji("✖️"),
             )
 

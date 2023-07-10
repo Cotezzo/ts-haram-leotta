@@ -2,10 +2,12 @@ import axios from "axios";
 import { YT_RESULT_TYPES } from "../globals/SongTypes";
 import { shortYoutubeVideo } from "./MusicService";
 
+const cookie = "__Secure-3PSID=NAicbd0CIiVdc3Zb4yaAeZICNbRn46Sle13dKnyk3CNeiPtArQrATvJRXSsPl36noEtV6w.;";
+
 const getYoutubeInitData = async (url: string): Promise<any> => {
     //axios.get(encodeURI(url) + '&sp=EgIQAQ%253D%253D').then(page => {
     // axios.get(url + '&sp=EgIQAQ%253D%253D').then(page => {
-    const { data }: { data: string } = await axios.get(url);
+    const { data }: { data: string } = await axios.get(url, { headers: { cookie }});
 
     // Ricava JSON principale di YouTube
     const initData = JSON.parse(data.split('var ytInitialData =')[1].split("</script>")[0].slice(0, -1));
@@ -76,9 +78,10 @@ export const getYoutubePlaylistFull = async (playlistId: string): Promise<any> =
 };
 
 export const getYoutubeMixIds = async (videoId: string, mixId: string): Promise<string[]> => {
-    const { data }: { data: string } = await axios.get(`https://www.youtube.com/watch?v=${videoId}&list=RD${mixId}`)
+    const { data }: { data: string } = await axios.get(`https://www.youtube.com/watch?v=${videoId}&list=RD${mixId}`, { headers: { cookie }})
 
     const contents =  JSON.parse(data.split('var ytInitialData =')[1].split("</script>")[0].slice(0, -1)).contents;
+
     return contents.twoColumnWatchNextResults.playlist.playlist.contents.map(({ playlistPanelVideoRenderer: e }) => {
         return { id: e.videoId, title: e.title.simpleText, thumbnail: e.thumbnail.thumbnails.pop().url, lengthString: e.lengthText.simpleText }
     });

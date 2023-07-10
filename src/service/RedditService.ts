@@ -1,4 +1,4 @@
-import { ColorResolvable, CommandInteraction, Message, MessageEmbed, TextChannel } from 'discord.js';
+import { ColorResolvable, CommandInteraction, Message, EmbedBuilder, TextChannel } from 'discord.js';
 import axios from 'axios';
 import he from "he";
 import { RedditPost, RedditSortBy, RedditSub } from '../interfaces/RedditInterfaces';
@@ -18,6 +18,7 @@ export const getPost = async (channelId: string, subName: string, sortby: Reddit
     return new Promise(async (resolve, reject) => {
         try {
             if (!/^\w+$/.test(subName)) return reject("Invalid subreddit name.");                           // Check if the string is valid
+            Logger.info(subName);
 
             /* ==== RedditSub Instance ========================================================= */
             let subsMap: RedditSubsMap<RedditSub> = channelsMap[channelId]; // Takes the redditSubsMap bind to the channel
@@ -107,10 +108,10 @@ export const sendPost = (post: RedditPost, risp: Message | CommandInteraction): 
 
             /* ==== Check NSFW ========================================================================= */
             if(post.over_18 && risp.channel instanceof TextChannel && !risp.channel?.nsfw)
-                return risp.reply({ embeds: [new MessageEmbed()
-                    .setColor(process.env.EMBED_COLOR as ColorResolvable)
+                return risp.reply({ embeds: [new EmbedBuilder()
+                    .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
                     .setTitle("This channel is not NSFW.")
-                    .setFooter("The post you are trying to view is NSFW. Try again in another channel. ")]});
+                    .setFooter({text: "The post you are trying to view is NSFW. Try again in another channel. "})]});
         
             /* ==== Check Crosspost ==================================================================== */
             if (post.crosspost_parent)                                                                                          // If it's a crosspost, fetch again the post
@@ -133,13 +134,13 @@ export const sendPost = (post: RedditPost, risp: Message | CommandInteraction): 
             /* ==== Post Send ========================================================================== */
             switch (post.post_hint) {
                 case "image":
-                    risp.reply({ embeds: [new MessageEmbed()
-                        .setColor(process.env.EMBED_COLOR as ColorResolvable)
-                       .setAuthor(post.subreddit_name_prefixed)
+                    risp.reply({ embeds: [new EmbedBuilder()
+                        .setColor(Number.parseInt(process.env.EMBED_COLOR))
+                       .setAuthor({name: post.subreddit_name_prefixed})
                        .setTitle(`${post.title.substring(0, 256)}`)
                        .setURL(`https://www.reddit.com${post.permalink}`)
                        .setImage(post.url)
-                       .setFooter(`👍🏿 ${post.ups}     ✉️ ${post.num_comments}`)] });
+                       .setFooter({text: `👍🏿 ${post.ups}     ✉️ ${post.num_comments}`})] });
                     break;
                 
                 case "link":
@@ -162,16 +163,16 @@ export const sendPost = (post: RedditPost, risp: Message | CommandInteraction): 
                     const a: string = post.media?.reddit_video?.fallback_url || post.url_overridden_by_dest || "";
                     if(a /* || !post.selftext */) return risp.reply(title + "\n" + a);
 
-                    const embed = new MessageEmbed()
-                        .setColor(process.env.EMBED_COLOR as ColorResolvable)
-                        .setAuthor(post.subreddit_name_prefixed)
+                    const embed = new EmbedBuilder()
+                        .setColor(Number.parseInt(process.env.EMBED_COLOR))
+                        .setAuthor({name: post.subreddit_name_prefixed})
                         // .setTitle(title)
                         // .addField("­", title)
                         // .addField(`­`, post.selftext.substring(0, 1000))
                         .setURL(`https://www.reddit.com${post.permalink}`)
-                        .setFooter(`👍🏿 ${post.ups}     ✉️ ${post.num_comments}`);
+                        .setFooter({text: `👍🏿 ${post.ups}     ✉️ ${post.num_comments}`});
         
-                    if(title.length > 255) embed.addField("­", title);
+                    if(title.length > 255) embed.addFields({name: "­", value: title});
                     else embed.setTitle(title);
         
                     if(!post.selftext) return risp.reply({ embeds: [embed] });
@@ -179,11 +180,11 @@ export const sendPost = (post: RedditPost, risp: Message | CommandInteraction): 
                     const tooLong: boolean = title.length + post.selftext.length > 5950 || !!post.media_metadata;
         
                     if(tooLong) risp.reply(title + "\n" + post.selftext.substring(0, 1000));
-                    else embed.addField("­", `**${post.selftext.substring(0, 1000)}**`);
+                    else embed.addFields({name: "­", value: `**${post.selftext.substring(0, 1000)}**`});
         
                     for (let i = 1; i < Math.floor(post.selftext.length / 1000) + 1; i++)
                         if(tooLong) risp.channel.send(post.selftext.substring(0 + (1000 * i), 1000 * (i + 1)));
-                        else embed.addField("­", `**${post.selftext.substring(0 + (1000 * i), 1000 * (i + 1))}**`);
+                        else embed.addFields({name: "­", value: `**${post.selftext.substring(0 + (1000 * i), 1000 * (i + 1))}**`});
                     // risp.channel.send(post.selftext.substring(0 + (1000 * i), 1000 * (i + 1)));
                     if(!tooLong) risp.reply({ embeds: [embed] });
 

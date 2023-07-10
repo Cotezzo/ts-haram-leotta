@@ -3,13 +3,27 @@ import dotenv from "dotenv";
 dotenv.config();                                                                    // Configure dotenv here - first imported file
 
 /* ==== Imports =========================================================================================================================== */
-import { Options } from 'discord.js';
+import { GatewayIntentBits, Options } from 'discord.js';
 import { HaramLeotta } from './classes/HaramLeotta';
 import { Logger } from "./classes/Logger";
 
 /* ==== Core - Configure process.env globally and create bot instance ===================================================================== */
 export const HaramLeottaInstance: HaramLeotta = new HaramLeotta({
-    intents: [ 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'DIRECT_MESSAGE_TYPING', 'GUILDS', 'GUILD_EMOJIS_AND_STICKERS', 'GUILD_INTEGRATIONS', 'GUILD_INVITES', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MESSAGE_TYPING', 'GUILD_VOICE_STATES', 'GUILD_WEBHOOKS' ],
+    intents: [
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildWebhooks
+    ],
     makeCache: Options.cacheWithLimits({ MessageManager: 25, GuildBanManager: 0, BaseGuildEmojiManager: 0, GuildEmojiManager: 0, GuildInviteManager: 0, GuildStickerManager: 0, ReactionManager: 0, ReactionUserManager: 0, ApplicationCommandManager: 0, PresenceManager: 0, StageInstanceManager: 0 })
 });
 HaramLeottaInstance.init();
