@@ -1,4 +1,4 @@
-import { CommandInteraction, Message, MessageActionRow, MessageButton } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction, Message } from "discord.js";
 import { YT_RESULT_TYPES } from "../globals/SongTypes";
 import { getFirstYoutubeResults, getNextYoutubeResults } from "../service/YoutubeService";
 import { formatSchifo } from "../utils/StringFormatUtils";
@@ -93,23 +93,23 @@ export class YoutubeNavigator {
         }
         content += (afterExists ? `\n\nChoose a video just with '<n>'` : 'No results found. ') + `\`\`\``; //Specie di footer per dare istruzioni
 
-        const component: MessageActionRow = new MessageActionRow()
+        const component: ActionRowBuilder = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`prev-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994255527946")
                     .setDisabled(!this.pageScrollIndex),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`next-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994326851634")
                     .setDisabled(!afterExists),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`reset-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("✖️"),
             )
 

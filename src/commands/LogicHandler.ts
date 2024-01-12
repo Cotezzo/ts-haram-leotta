@@ -1,5 +1,5 @@
 /* ==== Imports =========================================================================================================================== */
-import { ButtonInteraction, ColorResolvable, CommandInteraction, Message, MessageEmbed, User } from "discord.js";
+import { AttachmentBuilder, ButtonInteraction, ColorResolvable, CommandInteraction, EmbedBuilder, Message, User } from "discord.js";
 import axios from "axios";
 
 import { HaramLeottaInstance } from "..";
@@ -33,39 +33,47 @@ const logicHandler: Commands<Command> = {
     },
     info: {
         name: "info", category: "Information", description: "Lets the bot speak a bit about himself",
-        fn: () => { return { embeds: [new MessageEmbed()
-            .setColor(process.env.EMBED_COLOR as ColorResolvable)
+        fn: () => { return { embeds: [new EmbedBuilder()
+            .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
             .setTitle("HaramLeotta informations")
-            .addField("First name", "Haram", true)
-            .addField("Middle name", "Ibra", true)
-            .addField("Surname", "Leotta", true)
-            .addField("Birthday", "December 17st, ‎2020", true)
-            .addField("Version", process.env.VERSION, true)
-            .setFooter(`Created by Boquobbo#5645            Special Thanks to Depa`)
+            .addFields(
+                {name:"First name", value:"Haram", inline:true},
+                {name:"Middle name", value:"Ibra", inline:true},
+                {name:"Surname", value:"Leotta", inline:true},
+                {name:"Birthday", value:"December 17st, ‎2020", inline:true},
+                {name:"Version", value:process.env.VERSION, inline:true}
+            )
+            .setFooter({text:`Created by Boquobbo#5645            Special Thanks to Depa`})
             .setThumbnail(HaramLeottaInstance.user.avatarURL())
             // .setThumbnail(`https://cdn.discordapp.com/attachments/638334134388785172/807421835946754048/fumocirno3d.gif`)
         ] } }
     },
     changelog: {
         name: "changelog", category: "Information", description: "News and notes about the bot code and functionalities.",
-        fn: () => { return { embeds: [new MessageEmbed()
-            .setColor(process.env.EMBED_COLOR as ColorResolvable)
+        fn: () => { return { embeds: [new EmbedBuilder()
+            .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
             .setTitle("Changelog: ")
-            .addField("Youtube major fixes", "Fixed some youtube playing bugs such as 410 error and 403 error; added playlists to query results.")
-            .addField("Youtube mix added", "Added automatic youtube mixes and 2 new commands: playmix (pm) and skipmix (sm).")
-            .addField("Fix attempt", "Added a fix for destroyed connections and files... I hope is works.")
-            .addField("Slash Commands", "Slash commands are in development and are coming soon!")
-            // .addField("SoundCloud support", "Ham play now supports SoundCloud song urls!")
-            .setFooter("For any suggestion or bug report feel free to DM me - Boquobbo#5645")] } }
+            .addFields(
+                {name: "Youtube major fixes", value:"Fixed some youtube playing bugs such as 410 error and 403 error; added playlists to query results."},
+                {name: "Youtube mix added", value:"Added automatic youtube mixes and 2 new commands: playmix (pm) and skipmix (sm)."},
+                {name: "Fix attempt", value:"Added a fix for destroyed connections and files... I hope it works."},
+                {name: "Slash Commands", value:"Slash commands are in development and are coming soon!"},
+            )
+            // {name: "SoundCloud support", value:"Ham play now supports SoundCloud song urls!"},
+            .setFooter({text: "For any suggestion or bug report feel free to DM me - Boquobbo#5645"})] } }
     },
     help: {
         name: "help", category: "Information", description: "Shows the list of all commands",
         fn: (cmdName: string) => {
-            const embed = new MessageEmbed().setColor(process.env.embedColor as ColorResolvable);
+
+            const embed = new EmbedBuilder().setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable);
+
 
             if(!cmdName || !logicHandler.hasOwnProperty(cmdName))
                 return { embeds: [ embed.setTitle("Haram Leotta Commands")
                     .addFields( Object.entries(categories).map( ( [key, value]) => { return { name: `${key} Commands`, value: `\`${value.join(`\`, \``)}\``} } ) ) ] };
+
+            Logger.info("ncz2");
 
             const { name, description, category, aliases, usage } = logicHandler[cmdName];
             embed.setTitle(`Command '${name}' help`)
@@ -73,7 +81,9 @@ const logicHandler: Commands<Command> = {
                             { name: "Description", value: description },
                             { name: "Usage", value: usage || "Quando ho voglia li metto" },
                             { name: "Aliases", value: aliases || "none" }])
-                .setFooter("<> => required argument - [] => optional argument - | => OR")
+                .setFooter({text:"<> => required argument - [] => optional argument - | => OR"})
+
+            Logger.info("ncz3");
 
             return { embeds: [embed] }
         }
@@ -116,8 +126,8 @@ const logicHandler: Commands<Command> = {
             .then(() => `Prefix set to \`${newPrefix}\`.`)
             .catch(() => "An error occurred - prefix unchanged.")
 
-            return { embeds: [new MessageEmbed()
-                    .setColor(process.env.EMBED_COLOR as ColorResolvable)
+            return { embeds: [new EmbedBuilder()
+                    .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
                     .setTitle("Prefix Settings")
                     .setDescription(desc)]
             };
@@ -128,26 +138,26 @@ const logicHandler: Commands<Command> = {
     pic: {
         name: "pic", category: "Images", description: "Sends the pic of a user. ",
         fn: async (user: User) => {                                 // Async per fare in modo che funzioni allo stesso modo di drip e lessgo (vedi MessageHandler)
-            return { embeds: [ new MessageEmbed()                   //Creo e mando embed
-            .setColor(process.env.EMBED_COLOR as ColorResolvable)
-            .setAuthor(`${user.tag}`, user.avatarURL())
-            .setImage(user.displayAvatarURL({ format: "png", size: 2048 })) ] }
+            return { embeds: [ new EmbedBuilder()                   //Creo e mando embed
+            .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
+            .setAuthor({name: `${user.tag}`, url: user.avatarURL()})
+            .setImage(user.displayAvatarURL({ extension: "png", size: 2048 })) ] }
         }
     },
     drip: {
         name: "drip", category: "Images", description: "HE REALLY BE DRIPPIN DOE",
         fn: (query: User | string) =>
             overlap("./images/sample/drip.png",
-            [{ path: (query instanceof User) ? query.displayAvatarURL({ format: "png", size: 256 }) : query, xPos: 210, yPos: 80, xRes: 256, yRes: 256, round: true }])
-            .then((imageUrl: string) => { return { files: [ imageUrl ] } })
+            [{ path: (query instanceof User) ? query.displayAvatarURL({ extension: "png", size: 256 }) : query, xPos: 210, yPos: 80, xRes: 256, yRes: 256, round: true }])
+            .then((attachment: AttachmentBuilder) => { return { files: [ attachment ] } })
     },
     lessgo: {
         name: "lessgo", category: "Images", description: "LESSGOOOOOOOOO 🧏🏿‍♂️🧏🏿‍♂️🧏🏿‍♂️",
         fn: async (query: User | string) => {
-            const path = (query instanceof User) ? query.displayAvatarURL({ format: "png", size: 256 }) : query;
+            const path = (query instanceof User) ? query.displayAvatarURL({ extension: "png", size: 256 }) : query;
             return overlap("./images/sample/lessgo.png",
             [{ path, xPos: 300, yPos: 180, xRes: 350, yRes: 350, round: true }, { path, xPos: 330, yPos: 75, xRes: 50, yRes: 50, round: true }])
-            .then((imageUrl: string) => { return { files: [ imageUrl ] } });
+            .then((attachment: AttachmentBuilder) => { return { files: [ attachment ] } });
         }
     },
 

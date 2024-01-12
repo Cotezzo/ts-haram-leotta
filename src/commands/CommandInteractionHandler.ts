@@ -1,5 +1,5 @@
 /* ==== Imports =========================================================================================================================== */
-import { CommandInteraction, Message, User } from "discord.js";
+import { CommandInteraction, InteractionResponse, Message, User } from "discord.js";
 
 import { ClassLogger } from "../classes/Logger";
 
@@ -34,7 +34,7 @@ const commandHandlerMap: CommandInteractionHandlerMap = {
     "ping, invite, info, changelog, coinflip, pacco, sus": (interaction, cmd) => interaction.reply(cmd()),
 
     /* ==== GENERIC ARGS =========================================================================================== */
-    echo: (interaction, _, { text }: { text: string }): Promise<void> => interaction.reply(text),                          // whole input
+    echo: (interaction, _, { text }: { text: string }): Promise<InteractionResponse<boolean>> => interaction.reply(text),                          // whole input
     help: (interaction, cmd, { command = null }: { command: string }): Promise<any> => interaction.reply(cmd(command)),   // 1 property input
     clap: (interaction, cmd, { text }: { text: string }): Promise<any> => interaction.reply(cmd(text.split(" "))),        // whole input as array
     prefix: async (interaction, cmd, { prefix }: { prefix: string }): Promise<Message> => { if(prefix) return cmd(interaction.member.user.id, prefix).then(content => interaction.reply(content)) },
@@ -48,7 +48,7 @@ const commandHandlerMap: CommandInteractionHandlerMap = {
     "translate, giggino": async (interaction, cmd, { text, language = "it" }: { text: string, language: string }): Promise<Message> =>
         cmd(text, language).then(content => interaction.reply(content))
         .catch(() => interaction.reply({ content: "Invalid language. ", ephemeral: true })),
-    reddit: (interaction, cmd, { subreddit, sortby = "hot" }: { subreddit: string, sortby: RedditSortBy }): Promise<void> => {
+    reddit: (interaction, cmd, { subreddit, sortby = "hot" }: { subreddit: string, sortby: RedditSortBy }): Promise<any> => {
         if(!/^\w+$/.test(subreddit)) return interaction.reply({ content: "Invalid subreddit. ", ephemeral: true });
         
         // return sendPost(await cmd(interaction.channelId, subreddit.replace(/ /g, ""), sortby), interaction)    // Try to get and send post

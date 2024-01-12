@@ -1,6 +1,6 @@
 /* ==== Imports ================================================================================== */
 import deepai from 'deepai';
-import { ColorResolvable, MessageEmbed } from 'discord.js';
+import { ColorResolvable, EmbedBuilder } from 'discord.js';
 import { DeepAiOperation } from '../interfaces/DeepAiInterfaces';
 
 /* ==== Setup ==================================================================================== */
@@ -19,11 +19,11 @@ export const deepAiApi = async (operation: DeepAiOperation, query: string) : Pro
 }
 
 export const deepAiShortcut = (title: string, image: string) => {
-    return { embeds: [new MessageEmbed()
-        .setColor(process.env.EMBED_COLOR as ColorResolvable)
+    return { embeds: [new EmbedBuilder()
+        .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
         .setTitle(title)
         .setURL(image)
         .setImage(image)
-        .setFooter("Powered by deepai.org")
+        .setFooter({text: "Powered by deepai.org"})
     ] }
 };

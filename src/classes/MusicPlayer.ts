@@ -1,6 +1,6 @@
 /* ==== Imports =========================================================================================================================== */
-import { ButtonInteraction, ColorResolvable, CommandInteraction, GuildMember, Message, MessageActionRow, MessageButton, MessageEmbed, StageChannel, TextBasedChannel, VoiceChannel } from "discord.js";
-import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionDisconnectReason, VoiceConnectionStatus } from "@discordjs/voice";
+import { ButtonInteraction, ColorResolvable, CommandInteraction, GuildMember, Message, EmbedBuilder, StageChannel, TextBasedChannel, VoiceChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors } from "discord.js";
+import { AudioPlayer, AudioPlayerStatus, AudioResource, createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, joinVoiceChannel, StreamType, VoiceConnection } from "@discordjs/voice";
 import ytdl from "ytdl-core";
 // import ytdl from "ytdl-core-discord";
 import axios from "axios";
@@ -300,7 +300,7 @@ export class MusicPlayer {
             }
 
             else if (youtubeVideo.test(url)) {                                                           // Add song from youtube video
-                const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails;
+                const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails as any;
 
                 const song: Song = { title, url, thumbnail: thumbnail.thumbnails.pop().url, lengthSeconds: +lengthSeconds, lengthString: secondsToString(+lengthSeconds), type: SONG_TYPES.YOUTUBE, requestor };
 
@@ -388,7 +388,7 @@ export class MusicPlayer {
         logger.debug(`fn:playMix_ started [url: ${url}]`);
 
         const videoId = getYoutubeVideoId(url);
-        const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails;
+        const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails as any;
         const song: Song = { title, url, thumbnail: thumbnail.thumbnails.pop().url, lengthSeconds: +lengthSeconds, lengthString: secondsToString(+lengthSeconds),
             requestor: risp.member.user.id, type: SONG_TYPES.YOUTUBE_MIX };
 
@@ -413,7 +413,7 @@ export class MusicPlayer {
 
         if (!youtubeVideo.test(url)) return;
         const videoId = getYoutubeVideoId(url);
-        const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails;
+        const { title, lengthSeconds, thumbnail } = (await ytdl.getBasicInfo(url)).player_response.videoDetails as any;
         const song: Song = { title, url, thumbnail: thumbnail.thumbnails.pop().url, lengthSeconds: +lengthSeconds, lengthString: secondsToString(+lengthSeconds),
             type: SONG_TYPES.YOUTUBE_MIX, requestor: risp.member.user.id, mixId: videoId, mixPlayedMap: new Set<string>(), mixQueue: await getYoutubeMixIds(videoId, videoId) };
 
@@ -682,15 +682,17 @@ export class MusicPlayer {
         position = position - this.currentSongIndex;
         // return await this.textChannel.send(
         const content = {
-            embeds: [new MessageEmbed()
-                .setColor(process.env.EMBED_COLOR as ColorResolvable)
+            embeds: [new EmbedBuilder()
+                .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
                 // .setDescription(`Queued [${song.title}](${song.url})`)
                 // .addField(`Song duration: [\`${song.lengthString}\`]`, `Requested by`, true)
                 // .addField(`Queued in position [\`${this.songs.length}\`]`, `**Estimated time until playing: [\`${this.getDurationString()}\`]**`, true)
                 // .setThumbnail(song.thumbnail)
                 .setDescription(description)
-                .addField(`Song duration: [\`${duration}\`]`, `By: <@${requestor}>`, true)
-                .addField(`Queued in position [\`${position ? position : "now"}\`]`, `**Time until playing: [\`${timeUntilPlaying ? secondsToString(timeUntilPlaying) : "none"}\`]**`, true)
+                .addFields(
+                    {name: `Song duration: [\`${duration}\`]`, value: `By: <@${requestor}>`, inline: true},
+                    {name: `Queued in position [\`${position ? position : "now"}\`]`, value: `**Time until playing: [\`${timeUntilPlaying ? secondsToString(timeUntilPlaying) : "none"}\`]**`, inline: true}
+                )
                 .setThumbnail(thumbnail)
             ]
         }
@@ -709,45 +711,47 @@ export class MusicPlayer {
         const paused: boolean = this.player.state.status === "paused";
         const song: Song = this.songQueue[this.currentSongIndex];
 
-        const embed = new MessageEmbed()
-            .setColor(process.env.EMBED_COLOR as ColorResolvable)
+        const embed = new EmbedBuilder()
+            .setColor(Number.parseInt(process.env.EMBED_COLOR) as ColorResolvable)
             .setTitle("Haram Leotta Music Player")
             .setDescription(`[${song.title}](${song.url})`)
             .setImage(song.thumbnail)
-            .addField(`Song duration: [\`${song.lengthString}\`]`, `By: <@${song.requestor}>`, true)
-            .addField(`Queue duration: [\`${this.getDurationString()}\`]`, `**Enqueued songs: [\`${this.songQueue.length - this.currentSongIndex}\`]**`, true);
+            .addFields(
+                { name: `Song duration: [\`${song.lengthString}\`]`, value: `By: <@${song.requestor}>`, inline: true},
+                { name: `Queue duration: [\`${this.getDurationString()}\`]`, value: `**Enqueued songs: [\`${this.songQueue.length - this.currentSongIndex}\`]**`, inline: true }
+            );
 
-        const component = new MessageActionRow()
+        const component = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`loop-${this.UUID}`)
-                    .setStyle(this.loop ? "SUCCESS" : "SECONDARY")
+                    .setStyle(this.loop ? ButtonStyle.Success : ButtonStyle.Secondary)
                     .setEmoji(this.loop === 1 ? "877873237244125214" : "877867473322541086"),
                 // .setEmoji(this.loop === 1 ? "🔂" : "🔁"),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`back-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     // .setEmoji("⏮️")
                     .setEmoji("877853994255527946")
                     .setDisabled(this.loop != 2 && !this.currentSongIndex),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId((paused ? "resume" : "pause") + `-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     // .setEmoji(paused ? "▶️" : "⏸️"),
                     .setEmoji(paused ? "877853994305855508" : "877853994259730453"),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`skip-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     // .setEmoji("⏭️")
                     .setEmoji("877853994326851634")
                     ,// .setDisabled(!this.loop && !this.songQueue[this.currentSongIndex + 1]),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`clear-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     // .setEmoji("⏹️")
                     .setEmoji("877853994293280828")
             );
@@ -784,35 +788,35 @@ export class MusicPlayer {
             content += `\n\nPage ${this.navPage + 1}/${pagTot + 1}                 ${(this.navPage === pagTot ? `Nothing else to see here. ` : `${this.songQueue.length - (this.navPage * 10)} more songs... `)}` + `\`\`\``;
         }
 
-        const component: MessageActionRow = new MessageActionRow()
+        const component: ActionRowBuilder = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`navfirst-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994255527946")
                     .setDisabled(!this.navPage),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`navprev-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994255527946")
                     .setDisabled(!this.navPage),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`navnext-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994326851634")
                     .setDisabled(this.navPage === pagTot),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`navlast-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("877853994326851634")
                     .setDisabled(this.navPage === pagTot),
 
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId(`navreset-${this.UUID}`)
-                    .setStyle("SECONDARY")
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("✖️"),
             )
 

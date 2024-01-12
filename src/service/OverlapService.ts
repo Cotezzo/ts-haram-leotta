@@ -1,6 +1,7 @@
-import { DataResolver } from 'discord.js';
+import { Attachment, AttachmentBuilder, DataResolver } from 'discord.js';
 import Jimp from 'jimp';
 import { OverlapOptions } from '../interfaces/OverlapOptions';
+import { Logger } from '../classes/Logger';
 
 /**
  * Overlaps different images, given their path and some options
@@ -10,13 +11,16 @@ import { OverlapOptions } from '../interfaces/OverlapOptions';
  * @returns {Promise<void>}
  */
 export const overlap = async (inputPath: string, optionsArray: OverlapOptions[]) : Promise<any> => {
-    const firstInputImage = await Jimp.read(inputPath);                                                 // Reads the input image
-    for(const {path, xPos, yPos, xRes, yRes, round} of optionsArray){                                   // For each set of options
-            const nthInputImage = await Jimp.read(path);                                                // Reads the input image;
-            nthInputImage.resize(xRes || nthInputImage.getWidth(), yRes || nthInputImage.getHeight());  // Resize the image
-            if(round) nthInputImage.circle({ radius: xRes/2, x: xRes/2, y: yRes/2 });                   // Round the image
-            firstInputImage.composite(nthInputImage, xPos || 0, yPos || 0);                             // Composite the two images (base, nth)
+    const firstInputImage = await Jimp.read(inputPath);                                             // Reads the input image
+    for(const {path, xPos, yPos, xRes, yRes, round} of optionsArray){                               // For each set of options
+        const nthInputImage = await Jimp.read(path);                                                // Reads the input image;
+        // Logger.info(path)
+        nthInputImage.resize(xRes || nthInputImage.getWidth(), yRes || nthInputImage.getHeight());  // Resize the image
+        if(round) nthInputImage.circle({ radius: xRes/2, x: xRes/2, y: yRes/2 });                   // Round the image
+        firstInputImage.composite(nthInputImage, xPos || 0, yPos || 0);                             // Composite the two images (base, nth)
     }
-    const buffer = await firstInputImage.getBufferAsync(firstInputImage.getMIME());                     // Convert image as buffer
-    return await DataResolver.resolveFileAsBuffer(buffer);                                              // Return the Discord resolved image
+    const buffer = await firstInputImage.getBufferAsync(firstInputImage.getMIME());                 // Convert image as buffer
+    Logger.debug("Overlap finished succesfully");
+    return new AttachmentBuilder(buffer, {name: "overlap.png"});
+    // return await DataResolver.resolveFile(buffer);                                                 // Return the Discord resolved image
 }
